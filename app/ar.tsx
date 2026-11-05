@@ -33,7 +33,7 @@ export default function ARScreen() {
         carpetMaterial: {
           diffuseTexture: { uri: selectedCarpet.texture },
           lightingModel: 'Lambert',
-          shininess: 0.1,
+          shininess: 0.05,
         },
       });
     }
@@ -47,7 +47,6 @@ export default function ARScreen() {
     );
   }
 
-  // Parse size string like "2.00 x 3.00 m"
   const parseSize = (sizeStr: string) => {
     const match = sizeStr.match(/([\d.]+)\s*x\s*([\d.]+)/i);
     if (match) {
@@ -60,36 +59,43 @@ export default function ARScreen() {
 
   const ARScene = () => {
     const [placed, setPlaced] = useState(false);
+    const [rotation, setRotation] = useState(0);
 
     return (
       <ViroARScene>
-        <ViroAmbientLight color="#ffffff" intensity={300} />
+        <ViroAmbientLight color="#ffffff" intensity={350} />
         <ViroSpotLight
-          innerAngle={15}
-          outerAngle={60}
-          direction={[0, -1, -0.1]}
-          position={[0, 4, 0]}
+          innerAngle={20}
+          outerAngle={70}
+          direction={[0, -1, -0.05]}
+          position={[0, 4.5, 0]}
           color="#ffffff"
           castsShadow
           shadowMapSize={2048}
         />
 
         <ViroARPlaneSelector
-          minHeight={0.3}
-          minWidth={0.3}
+          minHeight={0.25}
+          minWidth={0.25}
           alignment="HorizontalUpward"
           onPlaneSelected={() => setPlaced(true)}
         >
           {placed && (
             <ViroBox
-              position={[0, 0.002, 0]}
-              scale={[size.width, 0.005, size.length]}
+              position={[0, 0.003, 0]}
+              scale={[size.width, 0.004, size.length]}
+              rotation={[0, rotation, 0]}
               materials={["carpetMaterial"]}
               dragType="FixedToPlane"
               dragPlane={{
                 planePoint: [0, 0, 0],
                 planeNormal: [0, 1, 0],
-                maxDistance: 8,
+                maxDistance: 10,
+              }}
+              onRotate={(rotateState, rotationFactor) => {
+                if (rotateState === 2) {
+                  setRotation((prev) => prev + rotationFactor);
+                }
               }}
             />
           )}
@@ -98,8 +104,8 @@ export default function ARScreen() {
         {!placed && (
           <ViroText
             text="Scannez le sol puis touchez pour placer"
-            position={[0, 0.5, -1.2]}
-            style={{ fontSize: 18, color: '#FFFFFF', textAlign: 'center' }}
+            position={[0, 0.6, -1.3]}
+            style={{ fontSize: 16, color: '#FFFFFF', textAlign: 'center' }}
           />
         )}
       </ViroARScene>
@@ -119,7 +125,9 @@ export default function ARScreen() {
         <Text style={styles.badgeText}>{selectedCarpet.name}</Text>
         <Text style={styles.badgeSub}>{selectedCarpet.size} · Réf. {selectedCarpet.ref}</Text>
         <Text style={styles.hint}>
-          {placed ? 'Déplacez le tapis avec le doigt' : 'Pointez le sol et touchez pour placer'}
+          {placed
+            ? 'Déplacez · Tournez à deux doigts'
+            : 'Pointez le sol et touchez pour placer'}
         </Text>
       </View>
     </View>
