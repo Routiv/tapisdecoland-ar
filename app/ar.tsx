@@ -9,6 +9,7 @@ import {
   ViroMaterials,
   ViroAmbientLight,
   ViroSpotLight,
+  ViroText,
 } from '@reactvision/react-viro';
 
 export default function ARScreen() {
