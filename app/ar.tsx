@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import {
   ViroARScene,
   ViroARSceneNavigator,
@@ -34,7 +35,8 @@ export default function ARScreen() {
         carpetMaterial: {
           diffuseTexture: { uri: selectedCarpet.texture },
           lightingModel: 'Lambert',
-          shininess: 0.05,
+          shininess: 0.02,
+          diffuseIntensity: 1.0,
         },
       });
     }
@@ -65,31 +67,36 @@ export default function ARScreen() {
 
     const currentScale = lockSize ? 1 : scaleFactor;
 
+    const handlePlace = () => {
+      setPlaced(true);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    };
+
     return (
       <ViroARScene>
-        <ViroAmbientLight color="#ffffff" intensity={350} />
+        <ViroAmbientLight color="#ffffff" intensity={400} />
         <ViroSpotLight
-          innerAngle={20}
-          outerAngle={70}
-          direction={[0, -1, -0.05]}
-          position={[0, 4.5, 0]}
+          innerAngle={25}
+          outerAngle={80}
+          direction={[0, -1, -0.02]}
+          position={[0, 5, 0]}
           color="#ffffff"
           castsShadow
           shadowMapSize={2048}
         />
 
         <ViroARPlaneSelector
-          minHeight={0.25}
-          minWidth={0.25}
+          minHeight={0.2}
+          minWidth={0.2}
           alignment="HorizontalUpward"
-          onPlaneSelected={() => setPlaced(true)}
+          onPlaneSelected={handlePlace}
         >
           {placed && (
             <ViroBox
-              position={[0, 0.003, 0]}
+              position={[0, 0.002, 0]}
               scale={[
                 baseSize.width * currentScale,
-                0.004,
+                0.003,
                 baseSize.length * currentScale,
               ]}
               rotation={[0, rotation, 0]}
@@ -98,14 +105,14 @@ export default function ARScreen() {
               dragPlane={{
                 planePoint: [0, 0, 0],
                 planeNormal: [0, 1, 0],
-                maxDistance: 10,
+                maxDistance: 12,
               }}
               onRotate={(rotateState, rotationFactor) => {
                 if (rotateState === 2) setRotation((prev) => prev + rotationFactor);
               }}
               onPinch={(pinchState, scaleFactor) => {
                 if (!lockSize && pinchState === 2) {
-                  setScaleFactor((prev) => Math.max(0.5, Math.min(3, prev * scaleFactor)));
+                  setScaleFactor((prev) => Math.max(0.4, Math.min(3.5, prev * scaleFactor)));
                 }
               }}
             />
@@ -114,9 +121,9 @@ export default function ARScreen() {
 
         {!placed && (
           <ViroText
-            text="Scannez le sol puis touchez pour placer"
+            text="Scannez le sol (plan visible) puis touchez"
             position={[0, 0.6, -1.3]}
-            style={{ fontSize: 16, color: '#FFFFFF', textAlign: 'center' }}
+            style={{ fontSize: 15, color: '#FFFFFF', textAlign: 'center' }}
           />
         )}
       </ViroARScene>
@@ -133,7 +140,10 @@ export default function ARScreen() {
         <Text style={styles.backText}>← Retour</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.lockBtn} onPress={() => setLockSize(!lockSize)}>
+      <TouchableOpacity style={styles.lockBtn} onPress={() => {
+        setLockSize(!lockSize);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }}>
         <Text style={styles.lockText}>{lockSize ? 'Taille réelle' : 'Taille libre'}</Text>
       </TouchableOpacity>
 
@@ -142,8 +152,8 @@ export default function ARScreen() {
         <Text style={styles.badgeSub}>{selectedCarpet.size} · Réf. {selectedCarpet.ref}</Text>
         <Text style={styles.hint}>
           {placed
-            ? 'Déplacez · Tournez à 2 doigts' + (lockSize ? '' : ' · Pincez pour redimensionner')
-            : 'Pointez le sol et touchez pour placer'}
+            ? 'Déplacez · Tournez à 2 doigts' + (lockSize ? '' : ' · Pincez')
+            : 'Le plan apparaît en surbrillance — touchez pour placer'}
         </Text>
       </View>
     </View>
