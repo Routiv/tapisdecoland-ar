@@ -16,6 +16,7 @@ export default function ARScreen() {
   const { carpet } = useLocalSearchParams();
   const router = useRouter();
   const [selectedCarpet, setSelectedCarpet] = useState<any>(null);
+  const [lockSize, setLockSize] = useState(true);
 
   useEffect(() => {
     if (carpet && typeof carpet === 'string') {
@@ -55,11 +56,14 @@ export default function ARScreen() {
     return { width: 2, length: 3 };
   };
 
-  const size = parseSize(selectedCarpet.size);
+  const baseSize = parseSize(selectedCarpet.size);
 
   const ARScene = () => {
     const [placed, setPlaced] = useState(false);
     const [rotation, setRotation] = useState(0);
+    const [scaleFactor, setScaleFactor] = useState(1);
+
+    const currentScale = lockSize ? 1 : scaleFactor;
 
     return (
       <ViroARScene>
@@ -83,7 +87,11 @@ export default function ARScreen() {
           {placed && (
             <ViroBox
               position={[0, 0.003, 0]}
-              scale={[size.width, 0.004, size.length]}
+              scale={[
+                baseSize.width * currentScale,
+                0.004,
+                baseSize.length * currentScale,
+              ]}
               rotation={[0, rotation, 0]}
               materials={["carpetMaterial"]}
               dragType="FixedToPlane"
@@ -93,8 +101,11 @@ export default function ARScreen() {
                 maxDistance: 10,
               }}
               onRotate={(rotateState, rotationFactor) => {
-                if (rotateState === 2) {
-                  setRotation((prev) => prev + rotationFactor);
+                if (rotateState === 2) setRotation((prev) => prev + rotationFactor);
+              }}
+              onPinch={(pinchState, scaleFactor) => {
+                if (!lockSize && pinchState === 2) {
+                  setScaleFactor((prev) => Math.max(0.5, Math.min(3, prev * scaleFactor)));
                 }
               }}
             />
@@ -121,12 +132,17 @@ export default function ARScreen() {
       <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
         <Text style={styles.backText}>← Retour</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity style={styles.lockBtn} onPress={() => setLockSize(!lockSize)}>
+        <Text style={styles.lockText}>{lockSize ? 'Taille réelle' : 'Taille libre'}</Text>
+      </TouchableOpacity>
+
       <View style={styles.badge}>
         <Text style={styles.badgeText}>{selectedCarpet.name}</Text>
         <Text style={styles.badgeSub}>{selectedCarpet.size} · Réf. {selectedCarpet.ref}</Text>
         <Text style={styles.hint}>
           {placed
-            ? 'Déplacez · Tournez à deux doigts'
+            ? 'Déplacez · Tournez à 2 doigts' + (lockSize ? '' : ' · Pincez pour redimensionner')
             : 'Pointez le sol et touchez pour placer'}
         </Text>
       </View>
@@ -147,6 +163,16 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   backText: { color: '#FFF', fontWeight: '600' },
+  lockBtn: {
+    position: 'absolute',
+    top: 50,
+    right: 16,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  lockText: { color: '#FFF', fontWeight: '600', fontSize: 13 },
   badge: {
     position: 'absolute',
     bottom: 40,
