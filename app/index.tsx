@@ -1,4 +1,5 @@
-import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { useState } from 'react';
+import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,6 +11,7 @@ const CARPETS = [
     size: '2.00 x 3.00 m',
     texture: 'https://images.unsplash.com/photo-1606978805281-840af52adc1c?w=800',
     color: '#4A4A4A',
+    type: 'Moquette',
   },
   {
     id: '2',
@@ -18,6 +20,7 @@ const CARPETS = [
     size: '1.60 x 2.30 m',
     texture: 'https://images.pexels.com/photos/28389848/pexels-photo-28389848.jpeg?auto=compress&cs=tinysrgb&w=800',
     color: '#8B0000',
+    type: 'Tapis',
   },
   {
     id: '3',
@@ -26,6 +29,7 @@ const CARPETS = [
     size: '4.00 x 4.00 m',
     texture: 'https://images.unsplash.com/photo-1642077912812-6ff69ac639da?w=800',
     color: '#1E3A5F',
+    type: 'Moquette',
   },
   {
     id: '4',
@@ -34,20 +38,49 @@ const CARPETS = [
     size: '2.50 x 3.50 m',
     texture: 'https://images.unsplash.com/photo-1699245111017-658557db0abb?w=800',
     color: '#2C2C2C',
+    type: 'Tapis',
   },
 ];
 
 export default function Catalog() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<'Tous' | 'Moquette' | 'Tapis'>('Tous');
+
+  const filtered = CARPETS.filter((c) => {
+    const matchQuery = c.name.toLowerCase().includes(query.toLowerCase()) || c.ref.toLowerCase().includes(query.toLowerCase());
+    const matchFilter = filter === 'Tous' || c.type === filter;
+    return matchQuery && matchFilter;
+  });
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <Text style={styles.title}>Tapis Decoland</Text>
-      <Text style={styles.subtitle}>Visualisez votre tapis chez vous en réalité augmentée</Text>
+      <Text style={styles.subtitle}>Visualisez votre tapis chez vous</Text>
+
+      <TextInput
+        style={styles.search}
+        placeholder="Rechercher par nom ou référence"
+        placeholderTextColor="#666"
+        value={query}
+        onChangeText={setQuery}
+      />
+
+      <View style={styles.filters}>
+        {(['Tous', 'Moquette', 'Tapis'] as const).map((f) => (
+          <TouchableOpacity
+            key={f}
+            style={[styles.filterBtn, filter === f && styles.filterBtnActive]}
+            onPress={() => setFilter(f)}
+          >
+            <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>{f}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
       <FlatList
-        data={CARPETS}
+        data={filtered}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
@@ -61,7 +94,10 @@ export default function Catalog() {
               <Text style={styles.name}>{item.name}</Text>
               <Text style={styles.ref}>Réf. {item.ref}</Text>
               <Text style={styles.size}>{item.size}</Text>
-              <View style={[styles.colorDot, { backgroundColor: item.color }]} />
+              <View style={styles.row}>
+                <View style={[styles.colorDot, { backgroundColor: item.color }]} />
+                <Text style={styles.type}>{item.type}</Text>
+              </View>
             </View>
           </TouchableOpacity>
         )}
@@ -72,8 +108,23 @@ export default function Catalog() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0A0A0A' },
-  title: { fontSize: 32, fontWeight: '700', color: '#FFFFFF', textAlign: 'center', marginTop: 20 },
-  subtitle: { fontSize: 15, color: '#AAAAAA', textAlign: 'center', marginBottom: 24, paddingHorizontal: 20 },
+  title: { fontSize: 32, fontWeight: '700', color: '#FFFFFF', textAlign: 'center', marginTop: 12 },
+  subtitle: { fontSize: 15, color: '#AAAAAA', textAlign: 'center', marginBottom: 16, paddingHorizontal: 20 },
+  search: {
+    backgroundColor: '#1A1A1A',
+    color: '#FFF',
+    marginHorizontal: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    fontSize: 15,
+    marginBottom: 12,
+  },
+  filters: { flexDirection: 'row', justifyContent: 'center', marginBottom: 16, gap: 8 },
+  filterBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#1A1A1A' },
+  filterBtnActive: { backgroundColor: '#FFFFFF' },
+  filterText: { color: '#AAA', fontSize: 13 },
+  filterTextActive: { color: '#000', fontWeight: '600' },
   list: { paddingHorizontal: 16, paddingBottom: 40 },
   card: {
     backgroundColor: '#1A1A1A',
@@ -81,15 +132,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     overflow: 'hidden',
     flexDirection: 'row',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
   },
   image: { width: 120, height: 120 },
   info: { flex: 1, padding: 16, justifyContent: 'center' },
-  name: { fontSize: 18, fontWeight: '600', color: '#FFFFFF', marginBottom: 4 },
+  name: { fontSize: 17, fontWeight: '600', color: '#FFFFFF', marginBottom: 4 },
   ref: { fontSize: 13, color: '#888', marginBottom: 2 },
   size: { fontSize: 14, color: '#CCC' },
-  colorDot: { width: 16, height: 16, borderRadius: 8, marginTop: 8 },
+  row: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
+  colorDot: { width: 14, height: 14, borderRadius: 7, marginRight: 8 },
+  type: { color: '#AAA', fontSize: 12 },
 });
