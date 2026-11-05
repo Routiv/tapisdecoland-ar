@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, TextInput } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, TextInput, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -12,6 +12,9 @@ const CARPETS = [
     texture: 'https://images.unsplash.com/photo-1606978805281-840af52adc1c?w=800',
     color: '#4A4A4A',
     type: 'Moquette',
+    material: 'Polypropylène',
+    price: '45 €/m²',
+    available: true,
   },
   {
     id: '2',
@@ -21,6 +24,9 @@ const CARPETS = [
     texture: 'https://images.pexels.com/photos/28389848/pexels-photo-28389848.jpeg?auto=compress&cs=tinysrgb&w=800',
     color: '#8B0000',
     type: 'Tapis',
+    material: 'Laine',
+    price: '189 €',
+    available: true,
   },
   {
     id: '3',
@@ -30,6 +36,9 @@ const CARPETS = [
     texture: 'https://images.unsplash.com/photo-1642077912812-6ff69ac639da?w=800',
     color: '#1E3A5F',
     type: 'Moquette',
+    material: 'Nylon',
+    price: '38 €/m²',
+    available: false,
   },
   {
     id: '4',
@@ -39,6 +48,9 @@ const CARPETS = [
     texture: 'https://images.unsplash.com/photo-1699245111017-658557db0abb?w=800',
     color: '#2C2C2C',
     type: 'Tapis',
+    material: 'Polyester',
+    price: '249 €',
+    available: true,
   },
 ];
 
@@ -47,6 +59,7 @@ export default function Catalog() {
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<'Tous' | 'Moquette' | 'Tapis'>('Tous');
+  const [selected, setSelected] = useState<any>(null);
 
   const filtered = CARPETS.filter((c) => {
     const matchQuery = c.name.toLowerCase().includes(query.toLowerCase()) || c.ref.toLowerCase().includes(query.toLowerCase());
@@ -61,7 +74,7 @@ export default function Catalog() {
 
       <TextInput
         style={styles.search}
-        placeholder="Rechercher par nom ou référence"
+        placeholder="Nom ou référence magasin"
         placeholderTextColor="#666"
         value={query}
         onChangeText={setQuery}
@@ -86,7 +99,7 @@ export default function Catalog() {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.card}
-            onPress={() => router.push({ pathname: '/ar', params: { carpet: JSON.stringify(item) } })}
+            onPress={() => setSelected(item)}
             activeOpacity={0.85}
           >
             <Image source={{ uri: item.texture }} style={styles.image} />
@@ -97,11 +110,43 @@ export default function Catalog() {
               <View style={styles.row}>
                 <View style={[styles.colorDot, { backgroundColor: item.color }]} />
                 <Text style={styles.type}>{item.type}</Text>
+                {!item.available && <Text style={styles.unavailable}> · Indisponible</Text>}
               </View>
             </View>
           </TouchableOpacity>
         )}
       />
+
+      <Modal visible={!!selected} transparent animationType="slide">
+        <View style={styles.modalBg}>
+          <View style={styles.modal}>
+            {selected && (
+              <>
+                <Image source={{ uri: selected.texture }} style={styles.modalImage} />
+                <Text style={styles.modalTitle}>{selected.name}</Text>
+                <Text style={styles.modalDetail}>Réf. {selected.ref}</Text>
+                <Text style={styles.modalDetail}>{selected.size}</Text>
+                <Text style={styles.modalDetail}>Matière : {selected.material}</Text>
+                <Text style={styles.modalDetail}>Prix : {selected.price}</Text>
+                <Text style={styles.modalDetail}>{selected.available ? 'Disponible' : 'Indisponible'}</Text>
+
+                <TouchableOpacity
+                  style={styles.arBtn}
+                  onPress={() => {
+                    setSelected(null);
+                    router.push({ pathname: '/ar', params: { carpet: JSON.stringify(selected) } });
+                  }}
+                >
+                  <Text style={styles.arBtnText}>Voir en réalité augmentée</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.closeBtn} onPress={() => setSelected(null)}>
+                  <Text style={styles.closeText}>Fermer</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -141,4 +186,14 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
   colorDot: { width: 14, height: 14, borderRadius: 7, marginRight: 8 },
   type: { color: '#AAA', fontSize: 12 },
+  unavailable: { color: '#FF6B6B', fontSize: 12 },
+  modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+  modal: { backgroundColor: '#1A1A1A', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 40 },
+  modalImage: { width: '100%', height: 200, borderRadius: 12, marginBottom: 16 },
+  modalTitle: { fontSize: 22, fontWeight: '700', color: '#FFF', marginBottom: 8 },
+  modalDetail: { fontSize: 15, color: '#CCC', marginBottom: 6 },
+  arBtn: { backgroundColor: '#FFF', padding: 16, borderRadius: 12, marginTop: 16, alignItems: 'center' },
+  arBtnText: { color: '#000', fontWeight: '700', fontSize: 16 },
+  closeBtn: { marginTop: 12, alignItems: 'center', padding: 12 },
+  closeText: { color: '#AAA' },
 });
