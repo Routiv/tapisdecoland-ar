@@ -10,7 +10,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "be.tapisdecoland.ar",
-      "buildNumber": "3",
+      "buildNumber": "10",
       "infoPlist": {
         "NSCameraUsageDescription": "L'application utilise la caméra pour la réalité augmentée afin de visualiser les tapis dans votre intérieur."
       }
