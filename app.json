@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Tapis Decoland AR",
+    "slug": "tapisdecoland-ar",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0A0A0A"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "be.tapisdecoland.ar",
+      "infoPlist": {
+        "NSCameraUsageDescription": "L'application utilise la caméra pour la réalité augmentée afin de visualiser les tapis dans votre intérieur."
+      }
+    },
+    "android": {
+      "package": "be.tapisdecoland.ar",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0A0A0A"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "@reactvision/react-viro",
+        {
+          "android": {
+            "xRMode": ["AR"]
+          }
+        }
+      ]
+    ],
+    "scheme": "tapisdecoland"
+  }
+}
